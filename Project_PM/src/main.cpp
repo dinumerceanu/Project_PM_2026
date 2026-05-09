@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "uptime.h"
 #include "usart.h"
+#include "twi.h"
+#include "ssd1306.h"
 
 int main(void)
 {
@@ -18,6 +20,11 @@ int main(void)
 
     uptime_init();
     USART0_init(9600);
+    twi_init();
+    ssd1306_init();
+    ssd1306_clear();
+    ssd1306_print_str("READY", 0);
+    twi_discover();
     sei();
 
     while (1) {
@@ -56,5 +63,27 @@ int main(void)
         USART0_print("LEDs off after: ");
         USART0_print_u32(random_delay);
         USART0_print(" ms\r\n");
+
+        // print on I2C display
+        ssd1306_clear();
+        ssd1306_print_str("LEDS OFF AFTER:", 0);
+
+        char buf[16];
+        uint32_t ms = random_delay;
+
+        // builds "XXXX MS" string
+        uint8_t i = 0;
+        if (ms >= 1000) {
+            buf[i++] = '0' + (ms / 1000);
+        }
+        buf[i++] = '0' + ((ms % 1000) / 100);
+        buf[i++] = '0' + ((ms % 100) / 10);
+        buf[i++] = '0' + (ms % 10);
+        buf[i++] = ' ';
+        buf[i++] = 'M';
+        buf[i++] = 'S';
+        buf[i] = '\0';
+
+        ssd1306_print_str(buf, 2);
     }
 }
