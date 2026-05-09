@@ -13,6 +13,8 @@ int main(void)
     DDRB |= (1 << PB0);
     DDRB |= (1 << PB1);
     DDRB |= (1 << PB2);
+    DDRB |= (1 << PB3);
+    DDRB |= (1 << PB4);
 
     // PB7 start game
     DDRB &= ~(1 << PB7);
@@ -46,6 +48,7 @@ int main(void)
         _delay_ms(50);
 
         ssd1306_clear();
+        PORTB &= ~((1 << PB3) | (1 << PB4));
 
         // turn on LEDs one by one
         PORTB |= (1 << PB0);
@@ -114,13 +117,24 @@ int main(void)
 
         if (winner == 1) {
             ssd1306_print_str("P1 WINS", 0);
+            PORTB |= (1 << PB3);
         }
         else {
             ssd1306_print_str("P2 WINS", 0);
+            PORTB |= (1 << PB4);
         }
         ssd1306_print_str("P1:", 2);
         ssd1306_print_str(buf1, 3);
         ssd1306_print_str("P2:", 5);
         ssd1306_print_str(buf2, 6);
+
+        USART0_print("-------------------\r\n");
+        if (winner == 1) {
+            USART0_print("P1 WINS\r\n");
+        } else {
+            USART0_print("P2 WINS\r\n");
+        }
+        USART0_print("P1: "); USART0_print_u32(reaction_time_p1); USART0_print(" ms\r\n");
+        USART0_print("P2: "); USART0_print_u32(reaction_time_p2); USART0_print(" ms\r\n");
     }
 }
