@@ -18,6 +18,14 @@ int main(void)
     DDRB &= ~(1 << PB7);
     PORTB |= (1 << PB7);
 
+    // PD2 Player 1
+    DDRD &= ~(1 << PD2);
+    PORTD |= (1 << PD2);
+
+    // PD3 Player 2
+    DDRD &= ~(1 << PD3);
+    PORTD |= (1 << PD3);
+
     uptime_init();
     USART0_init(9600);
     twi_init();
@@ -35,7 +43,9 @@ int main(void)
         // wait for button release
         while (!(PINB & (1 << PB7)));
         // debounce
-        _delay_ms(50);     
+        _delay_ms(50);
+
+        ssd1306_clear();
 
         // turn on LEDs one by one
         PORTB |= (1 << PB0);
@@ -51,39 +61,66 @@ int main(void)
         t = uptime_ms();
         while ((uptime_ms() - t) < 1000);
 
-        // random delay 1-5 sec
+        // random delay 1-3 sec
         srand(uptime_ms());
-        uint32_t random_delay = (rand() % 5 + 1) * 1000UL;
+        uint32_t random_delay = (rand() % 3 + 1) * 1000UL;
         t = uptime_ms();
         while ((uptime_ms() - t) < random_delay);
 
         // turn off LEDs
         PORTB &= ~((1 << PB0) | (1 << PB1) | (1 << PB2));
+        uint32_t t_off = uptime_ms();
 
-        USART0_print("LEDs off after: ");
-        USART0_print_u32(random_delay);
-        USART0_print(" ms\r\n");
+        uint8_t winner = 0;
+        uint32_t reaction_time_p1 = 0;
+        uint32_t reaction_time_p2 = 0;
 
-        // print on I2C display
-        ssd1306_clear();
-        ssd1306_print_str("LEDS OFF AFTER:", 0);
-
-        char buf[16];
-        uint32_t ms = random_delay;
-
-        // builds "XXXX MS" string
-        uint8_t i = 0;
-        if (ms >= 1000) {
-            buf[i++] = '0' + (ms / 1000);
+        while (reaction_time_p1 == 0 || reaction_time_p2 == 0) {
+            if (!(PIND & (1 << PD2)) && reaction_time_p1 == 0) {
+                reaction_time_p1 = uptime_ms() - t_off;
+                if (winner == 0) {
+                    winner = 1;
+                }
+            }
+            if (!(PIND & (1 << PD3)) && reaction_time_p2 == 0) {
+                reaction_time_p2 = uptime_ms() - t_off;
+                if (winner == 0) {
+                    winner = 2;
+                }
+            }
+            if ((uptime_ms() - t_off) > 5000) break;
         }
-        buf[i++] = '0' + ((ms % 1000) / 100);
-        buf[i++] = '0' + ((ms % 100) / 10);
-        buf[i++] = '0' + (ms % 10);
-        buf[i++] = ' ';
-        buf[i++] = 'M';
-        buf[i++] = 'S';
-        buf[i] = '\0';
 
-        ssd1306_print_str(buf, 2);
+        char buf1[8], buf2[8];
+        uint8_t j = 0;
+        if (reaction_time_p1 >= 1000) {
+            buf1[j++] = '0' + (reaction_time_p1 / 1000);
+        }
+        buf1[j++] = '0' + ((reaction_time_p1 % 1000) / 100);
+        buf1[j++] = '0' + ((reaction_time_p1 % 100) / 10);
+        buf1[j++] = '0' + (reaction_time_p1 % 10);
+        buf1[j++] = 'M'; buf1[j++] = 'S'; buf1[j] = '\0';
+
+        j = 0;
+        if (reaction_time_p2 >= 1000) {
+            buf2[j++] = '0' + (reaction_time_p2 / 1000);
+        }
+        buf2[j++] = '0' + ((reaction_time_p2 % 1000) / 100);
+        buf2[j++] = '0' + ((reaction_time_p2 % 100) / 10);
+        buf2[j++] = '0' + (reaction_time_p2 % 10);
+        buf2[j++] = 'M';
+        buf2[j++] = 'S';
+        buf2[j] = '\0';
+
+        if (winner == 1) {
+            ssd1306_print_str("P1 WINS", 0);
+        }
+        else {
+            ssd1306_print_str("P2 WINS", 0);
+        }
+        ssd1306_print_str("P1:", 2);
+        ssd1306_print_str(buf1, 3);
+        ssd1306_print_str("P2:", 5);
+        ssd1306_print_str(buf2, 6);
     }
 }
