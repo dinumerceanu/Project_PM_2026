@@ -170,6 +170,11 @@ int main(void)
             USART0_print("-------------------\r\n");
             USART0_print("P1 WINS\r\n");
             USART0_print("P2 DISQUALIFIED\r\n");
+        } else if (winner == 0) {
+            ssd1306_print_str("NO WINNER", 0);
+            ssd1306_print_str("TIMEOUT", 2);
+            USART0_print("-------------------\r\n");
+            USART0_print("NO WINNER - TIMEOUT\r\n");
         } else {
             // normal win
             if (winner == 1) {
