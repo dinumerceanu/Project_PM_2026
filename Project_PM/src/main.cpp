@@ -1,18 +1,18 @@
-#include <Arduino.h>
+#include <avr/io.h>
+#include <util/delay.h>
 
-// put function declarations here:
-int myFunction(int, int);
+int main(void)
+{
+    // PB0, PB1, PB2 countdown
+    DDRB |= (1 << PB0);
+    DDRB |= (1 << PB1);
+    DDRB |= (1 << PB2);
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
-}
-
-void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    while (1) {
+        PORTB |= (1 << PB0);
+        _delay_ms(1000);
+        PORTB |= (1 << PB1);
+        _delay_ms(1000);
+        PORTB |= (1 << PB2);
+    }
 }
